@@ -54,8 +54,12 @@ export const metadata: Metadata = {
   authors: [{ name: event.hostName, url: event.contact.website }],
   // Thiệp này chỉ để gửi cho người quen, không cần xuất hiện trên kết quả tìm kiếm.
   robots: { index: false, follow: false },
+  // Địa chỉ chuẩn. Facebook/Zalo gom mọi biến thể (?v=1, dấu / cuối…) về một
+  // URL này khi cào, nên đổi đuôi link để ép cào lại vẫn không tách preview.
+  alternates: { canonical: "/" },
   openGraph: {
     type: "website",
+    url: "/",
     locale: "vi_VN",
     title: pageTitle,
     description: pageDescription,
