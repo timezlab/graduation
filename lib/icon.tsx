@@ -7,15 +7,15 @@
  * mũ màu bone, riêng dây tua đỏ flame (đỏ Bách khoa sắc dùng trên nền tối,
  * xem globals.css).
  *
- * Ô nền 60 đơn vị, icon 48 đặt giữa — lề 6 mỗi bên — bằng cách nới viewBox
- * chứ không dịch path. Cả khung phóng theo `size` nên favicon 64px và icon
+ * Ô nền 56 đơn vị, icon 48 đặt giữa — lề 4 mỗi bên — bằng cách nới viewBox
+ * chứ không dịch path. Cả khung phóng theo `size` nên favicon 256px và icon
  * màn hình chính 180px cùng một nét vẽ. Satori (bộ dựng ảnh của next/og)
  * hiểu trực tiếp các phần tử SVG cơ bản nên không cần qua ảnh.
  */
 export function GradCap({ size }: { size: number }) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="-6 -6 60 60">
-      <rect x="-6" y="-6" width="60" height="60" rx="11" fill="#07080c" />
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="-4 -4 56 56">
+      <rect x="-4" y="-4" width="56" height="56" rx="10" fill="#07080c" />
       {/* Dây tua */}
       <path
         d="M44.485 31.5A2.489 2.489 0 0 0 44 27.211V23.79l-2 .85v2.571a2.489 2.489 0 0 0-.485 4.29 2.49 2.49 0 0 0-1.015 2V36a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-2.5a2.49 2.49 0 0 0-1.015-2"

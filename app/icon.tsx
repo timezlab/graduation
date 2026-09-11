@@ -10,7 +10,7 @@ import { GradCap } from "@/lib/icon";
  * type="image/png" và trình duyệt tự dò nội dung ảnh, nên vẫn hiện đúng.
  */
 export const dynamic = "force-static";
-export const size = { width: 64, height: 64 };
+export const size = { width: 256, height: 256 };
 export const contentType = "image/png";
 
 export default function Icon() {
