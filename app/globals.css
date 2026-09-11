@@ -1,0 +1,1151 @@
+@import "tailwindcss";
+
+/* ═══════════════════════════════════════════════════════════════
+   "ĐÊM BÁCH KHOA"
+
+   Một tấm thiệp mời mở ra trong đêm. Nền gần như đen ngả lạnh, chữ
+   màu xương, và đúng một sắc nhấn: đỏ Bách Khoa lấy thẳng từ con dấu
+   trường. Không có màu thứ hai nào được phép chen vào — vàng chỉ tồn
+   tại bên trong ảnh con dấu chính thức, không bao giờ thành màu giao
+   diện.
+
+   Đỏ có hai sắc độ, và ranh giới giữa chúng là bắt buộc chứ không
+   phải thẩm mỹ:
+     --color-seal  dùng để TÔ NỀN (nút, con dấu, vạch). Chữ nhỏ đặt
+                   trên nó phải là --color-onseal.
+     --color-flame dùng để VIẾT CHỮ trên nền tối. Sắc seal đặt làm
+                   chữ nhỏ trên nền đen chỉ đạt 3.1:1, trượt chuẩn
+                   WCAG AA; flame đạt 6.1:1.
+   ═══════════════════════════════════════════════════════════════ */
+@theme {
+  --color-void: #07080c;
+  --color-night: #0c0f16;
+  --color-slate: #141925;
+  --color-line: #252b39;
+
+  --color-bone: #edeae3;
+  --color-ash: #99a0ae;
+  --color-faint: #737b8b;
+
+  --color-seal: #b62a30;
+  --color-flame: #e8676b;
+  --color-onseal: #fff7f6;
+
+  --font-display: var(--font-newsreader), Georgia, "Times New Roman", serif;
+  --font-sans: var(--font-be-vietnam), ui-sans-serif, system-ui, sans-serif;
+
+  /* Expo cho mọi thứ "hiện ra": phóng nhanh rồi hãm rất dài, nên vật
+     thể có cảm giác quán tính. Drape cho những mảng lớn trượt đi,
+     vào chậm ra chậm như một tấm vải rơi. */
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-drape: cubic-bezier(0.76, 0, 0.24, 1);
+}
+
+/* ── Hệ bo góc: MỘT giá trị cho cả trang ────────────────────────
+   2px, đúng bằng độ sắc của một mép giấy xén máy. Ngoại lệ duy nhất
+   là con dấu sáp — nó tròn vì bản thân con dấu sáp vốn tròn, không
+   phải vì trang cần thêm một hình dạng nữa. */
+:root {
+  --radius: 2px;
+  color-scheme: dark;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
+  background-color: var(--color-void);
+}
+
+body {
+  background-color: var(--color-void);
+  color: var(--color-bone);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+/* ── Giấu thanh cuộn ────────────────────────────────────────────
+   Cả trang là một cảnh dựng sẵn từ mép này sang mép kia; một dải xám
+   của hệ điều hành chạy dọc bên phải là thứ duy nhất trên màn hình
+   không thuộc về cảnh ấy. Trên Windows nó còn tô cả một rãnh nền sáng
+   suốt chiều cao, và nó cắt mất đúng cái mép phải mà ảnh toà C1 đang
+   tràn tới.
+
+   Giấu được thanh cuộn là vì trang ĐÃ CÓ chỉ báo tiến độ riêng: vạch
+   đỏ .scroll-progress bám đỉnh màn hình. Không có nó thì việc này là
+   lấy đi thông tin của người dùng chứ không phải dọn dẹp giao diện.
+
+   `scrollbar-width` lo cho Firefox và Chrome mới; `::-webkit-scrollbar`
+   lo cho Safari và WebKit trên iOS, nơi thuộc tính chuẩn kia vẫn chưa
+   được nhận. Phải khai cả hai, không thay nhau được.
+
+   Quan trọng: KHÔNG dùng `overflow: hidden` để giấu. Làm vậy là khoá
+   luôn việc cuộn, mà cả cảnh mở thư chạy bằng vị trí cuộn. */
+html {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+/* ── Hạt phim ───────────────────────────────────────────────────
+   Nền tối phẳng lì là thứ khiến một trang trông như bản dựng thử.
+   Một lớp hạt rất mảnh phủ cố định lên trên đủ để mảng đen có bề mặt.
+
+   Bắt buộc phải `fixed` và `pointer-events-none`: đặt lớp hạt lên một
+   vùng đang cuộn thì trình duyệt phải vẽ lại nó mỗi khung hình, và
+   khung hình trên điện thoại sập ngay. */
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  pointer-events: none;
+  opacity: 0.42;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+}
+
+/* Quầng đỏ rất nhạt trôi cực chậm phía sau nội dung. Dùng transform
+   chứ không dùng background-position: transform chạy trên compositor,
+   không bắt trình duyệt vẽ lại cả mảng nền mỗi khung hình. */
+.aura {
+  position: fixed;
+  inset: -30%;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at 26% 32%,
+    rgba(182, 42, 48, 0.075),
+    transparent 46%
+  );
+  animation: aura-drift 52s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+@keyframes aura-drift {
+  to {
+    transform: translate3d(6%, -4%, 0) scale(1.15);
+  }
+}
+
+/* ═══ CHỮ ═══════════════════════════════════════════════════════ */
+
+/* Newsreader là serif có trục quang học. Ở cỡ tiêu đề, siết optical
+   size lên cao thì nét thanh mảnh hẳn ra và chữ mới ra dáng thiệp in;
+   để mặc thì nó dày như chữ thân bài phóng to. */
+.font-display {
+  font-optical-sizing: auto;
+  font-variation-settings: "opsz" 48;
+  letter-spacing: -0.015em;
+}
+
+/* Số đếm ngược dùng bảng số đều bề ngang, để ô không co giật mỗi giây */
+.tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* Chữ hoa đầu đoạn, kiểu trang tạp chí */
+.dropcap::first-letter {
+  float: left;
+  margin: 0.08em 0.12em 0 0;
+  font-family: var(--font-display);
+  font-size: 3.6em;
+  font-weight: 500;
+  line-height: 0.76;
+  color: var(--color-flame);
+}
+
+/* ═══ CHUYỂN ĐỘNG ═══════════════════════════════════════════════
+
+   Ba lớp, dùng chung một bộ biến:
+     .rise   chữ dựng lên từng từ, từ sau một mép giấy
+     .fade   dòng hiện dần, so le nhau qua biến --d
+     .rule   gạch ngang tự kéo dài
+
+   Cả ba đều nổ khi khối cha nhận class `in-view` (do IntersectionObserver
+   gắn) hoặc `on-load` (khối đã nằm sẵn trên màn hình). Chia thế này để
+   một khối mười mấy dòng chỉ tốn đúng một observer.
+   ═══════════════════════════════════════════════════════════════ */
+
+.rise {
+  display: inline-block;
+  overflow: hidden;
+  /* Đuôi chữ g, y, ạ nằm dưới đường chân chữ; dấu chồng hai tầng như
+     ể, ữ, ấ lại vượt lên trên đường đỉnh chữ. Ô cắt phải chừa thêm chỗ
+     cả hai phía, thiếu phía nào thì dấu tiếng Việt phía ấy bị xén cụt —
+     "để" thành "đê". Đệm dương bù bằng lề âm để dòng không cao lên.
+
+     Chữ nghiêng còn đổ sang phải: móc của ể, chấm của i ở CUỐI từ nhô ra
+     ngoài bề rộng ô và bị xén ngang — "để" thành "đê", "nói" mất nửa
+     chấm. Nên chừa thêm cả hai bên, cũng bù bằng lề âm để khoảng cách
+     giữa các từ giữ nguyên. */
+  padding: 0.26em 0.2em 0.18em;
+  margin: -0.26em -0.2em -0.18em;
+  vertical-align: bottom;
+}
+
+.rise > span {
+  display: inline-block;
+  transform: translateY(130%);
+  opacity: 0;
+  transition:
+    transform 1s var(--ease-expo),
+    opacity 1s var(--ease-expo);
+  transition-delay: calc(var(--rise-index, 0) * 58ms + var(--rise-base, 0ms));
+}
+
+.in-view .rise > span {
+  transform: none;
+  opacity: 1;
+}
+
+/* Khối nằm sẵn trên màn hình không có "cuộn tới" để chờ, nên ở đây
+   dùng animation thay transition: animation tự chạy ngay khi trang vẽ
+   xong, còn transition thì phải có một lần đổi class mới nổ. */
+.on-load .rise > span {
+  transition: none;
+  animation: rise-in 1s var(--ease-expo) both;
+  animation-delay: calc(var(--rise-index, 0) * 58ms + var(--rise-base, 0ms));
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(130%);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.fade {
+  opacity: 0;
+  transform: translateY(1.15rem);
+  transition:
+    opacity 0.9s var(--ease-expo),
+    transform 0.9s var(--ease-expo);
+  transition-delay: var(--d, 0ms);
+}
+
+.in-view .fade {
+  opacity: 1;
+  transform: none;
+}
+
+.on-load .fade {
+  animation: fade-in 0.9s var(--ease-expo) both;
+  animation-delay: var(--d, 0ms);
+  opacity: 0;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(1.15rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.rule {
+  display: block;
+  height: 1px;
+  transform: scaleX(0);
+  transform-origin: left;
+  background-color: var(--color-seal);
+  transition: transform 1.2s var(--ease-expo) 0.12s;
+}
+
+.in-view .rule,
+.on-load .rule {
+  transform: scaleX(1);
+}
+
+/* ── Thanh tiến độ cuộn ─────────────────────────────────────────
+   Neo thẳng vào vị trí cuộn của trang qua scroll(), không đi qua một
+   trình xử lý sự kiện scroll nào. Trình duyệt chưa hỗ trợ thì thanh
+   nằm im ở scaleX(0) — vô hình, vô hại. */
+.scroll-progress {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 2px;
+  z-index: 55;
+  background-color: var(--color-seal);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  pointer-events: none;
+}
+
+@supports (animation-timeline: scroll()) {
+  .scroll-progress {
+    animation: progress-x linear both;
+    animation-timeline: scroll(root block);
+  }
+}
+
+@keyframes progress-x {
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* ── Trục hành trình ────────────────────────────────────────────
+   Hai lớp chồng nhau. Đường nền xám luôn hiện; vệt đỏ nằm trên mới là
+   phần vạch dần theo nhịp cuộn. Tách ra thế này thì trình duyệt chưa
+   hỗ trợ scroll-driven animation vẫn thấy một trục hoàn chỉnh, thay
+   vì thấy khoảng trống giữa các chấm và tưởng trang bị lỗi. */
+.spine-wrap {
+  -webkit-mask-image: linear-gradient(to bottom, #000 76%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 76%, transparent 100%);
+}
+
+.spine {
+  transform-origin: top;
+  transform: scaleY(0);
+}
+
+@supports (animation-timeline: view()) {
+  .spine {
+    animation: draw-y linear both;
+    animation-timeline: view();
+    /* Neo theo `cover` chứ không phải `entry`/`contain`: chỉ `cover` là
+       luôn tồn tại. Hai pha kia biến mất tuỳ danh sách cao hơn hay
+       thấp hơn khung nhìn, mà điều đó đổi theo từng cỡ màn hình. */
+    animation-range: cover 22% cover 82%;
+  }
+}
+
+@keyframes draw-y {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+/* ── Dải ảnh chạy vòng ──────────────────────────────────────────
+   Hai hàng chạy ngược chiều nhau, lặp vô tận. Danh sách được nhân đôi
+   trong markup và cuộn đi đúng một nửa chiều rộng, nên điểm nối rơi
+   vào đúng chỗ bản sao bắt đầu và mắt không bắt được mối.
+
+   Rê chuột thì dừng hẳn chứ không giảm tốc: đổi animation-duration
+   giữa chừng làm cả dải nhảy vị trí, vì thời gian đã trôi được ánh xạ
+   lại theo chu kỳ mới. */
+.marquee {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+}
+
+.marquee--left {
+  animation: marquee-left 45s linear infinite;
+}
+
+.marquee--right {
+  animation: marquee-right 55s linear infinite;
+}
+
+.marquee-rail:hover .marquee,
+.marquee-rail:focus-within .marquee {
+  animation-play-state: paused;
+}
+
+@keyframes marquee-left {
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@keyframes marquee-right {
+  from {
+    transform: translate3d(-50%, 0, 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+/* Hai mép dải nhoè vào nền, để ảnh không bị cắt cụt bằng một đường
+   thẳng đứng ngay giữa màn hình. */
+.rail-mask {
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 7%,
+    #000 93%,
+    transparent
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 7%,
+    #000 93%,
+    transparent
+  );
+}
+
+/* ── Ảnh ────────────────────────────────────────────────────────
+   Ảnh trên nền tối bị hạ độ bão hoà và kéo tối một chút, để chúng
+   ngồi vào tông chung thay vì nổi bật lên như dán đè. Chạm vào thì
+   trở lại đủ màu. */
+.plate img {
+  transition:
+    transform 1.2s var(--ease-expo),
+    filter 0.7s ease;
+  filter: saturate(0.7) brightness(0.84) contrast(1.06);
+}
+
+.plate:hover img,
+.plate:focus-within img {
+  transform: scale(1.04);
+  filter: saturate(0.95) brightness(0.98) contrast(1.02);
+}
+
+/* ── Vòng ngắm trên bản đồ ──────────────────────────────────────
+   Đánh dấu đúng toà C1 giữa bản đồ đã bị hạ gần hết màu. Vòng ngoài
+   loang ra rồi tan, lặp mãi: đây là chấm đỏ duy nhất trên trang được
+   phép chuyển động không ngừng, vì nó đang trả lời đúng câu hỏi của cả
+   khối ("ở đâu?") chứ không trang trí. Chỉ dùng transform và opacity
+   nên chạy trên compositor, không vẽ lại bản đồ phía dưới. */
+.ping {
+  animation: ping-out 2.6s var(--ease-expo) infinite;
+}
+
+@keyframes ping-out {
+  0% {
+    transform: scale(0.35);
+    opacity: 0.9;
+  }
+  70%,
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+/* ── Nút ────────────────────────────────────────────────────────
+   --mx/--my do con trỏ ghi vào (xem components/Magnetic.tsx). Kéo bằng
+   translate chứ không đổi left/top: không sinh reflow, và hợp nhất
+   được với hiệu ứng nhấn xuống ở dưới. */
+.magnetic {
+  transform: translate3d(var(--mx, 0px), var(--my, 0px), 0);
+  transition: transform 0.4s var(--ease-expo);
+}
+
+.magnetic:active {
+  transform: translate3d(var(--mx, 0px), var(--my, 0px), 0) scale(0.97);
+}
+
+/* Vệt sáng quét qua mặt nút khi rê chuột lên */
+.sheen {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.sheen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  transform: translateX(-110%) skewX(-18deg);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 247, 246, 0.26),
+    transparent
+  );
+  transition: transform 0.9s var(--ease-expo);
+}
+
+.sheen:hover::after,
+.sheen:focus-visible::after {
+  transform: translateX(110%) skewX(-18deg);
+}
+
+/* Nhấn xuống một pixel, đủ để ngón tay tin là nút có bề dày */
+.press {
+  transition:
+    transform 0.18s var(--ease-expo),
+    background-color 0.25s ease,
+    border-color 0.25s ease,
+    color 0.25s ease;
+}
+
+.press:active {
+  transform: translateY(1px);
+}
+
+/* ── Thanh dính ─────────────────────────────────────────────────
+   Hiện lên sau khi khách cuộn qua màn mở đầu. */
+.dock {
+  transform: translateY(140%);
+  opacity: 0;
+  transition:
+    transform 0.7s var(--ease-expo),
+    opacity 0.4s ease;
+}
+
+.dock.is-docked {
+  transform: none;
+  opacity: 1;
+}
+
+/* ── Bánh xe chữ số ─────────────────────────────────────────────
+   Mỗi chữ số là một cuộn 0–9 trượt dọc trong khung cao đúng một dòng.
+   Đổi số thì cuộn quay, không phải chữ này thay chữ kia — đây là thứ
+   khiến đồng hồ trông như đang chạy chứ không phải đang cập nhật. */
+.reel {
+  display: inline-block;
+  overflow: hidden;
+  /* Ô cao hơn một dòng chữ chứ không bằng đúng một dòng: chữ số của
+     Newsreader vươn cao hơn hộp dòng của nó, khung 1em sẽ cắt cụt đầu
+     số này và để lọt chân số nằm ngay trên nó trong cuộn. */
+  height: 1.28em;
+  line-height: 1.28;
+  vertical-align: bottom;
+}
+
+.reel__track {
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.75s var(--ease-expo);
+  will-change: transform;
+}
+
+/* Cuộn có đúng mười ô, nên dịch 10% chiều cao cuộn là đi hết một ô.
+   Quan hệ này giữ nguyên dù đổi chiều cao ô thành bao nhiêu. */
+.reel__cell {
+  display: flex;
+  height: 1.28em;
+  line-height: 1.28;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ═══ PHONG BÌ ══════════════════════════════════════════════════
+
+   Cảnh mở thư dựng bằng transform 3D thật chứ không phải ảnh ghép.
+
+   Toàn bộ kích thước của cảnh dẫn xuất từ ĐÚNG MỘT biến, --env-w.
+   Đây không phải chuyện gọn gàng: ô cắt clip-path của cửa sổ morph
+   (components/Envelope.tsx) đọc lại chính --card-w/--card-h ở đây để
+   biết phải mở ra từ đâu. Nếu khung tấm thiệp và ô cắt lấy số từ hai
+   nguồn khác nhau thì ở một bề ngang màn hình nào đó chúng sẽ lệch,
+   và cú morph sẽ nhảy một nhát ngay khoảnh khắc quan trọng nhất.
+   ═══════════════════════════════════════════════════════════════ */
+.envelope-stage {
+  --env-w: min(25rem, calc(100vw - 2.5rem));
+  --env-h: calc(var(--env-w) / 1.5);
+  /* Tấm thiệp nhỏ hơn lòng phong bì một chút ở cả hai chiều — đúng như
+     một tấm thiệp thật, phải hở mép mới rút ra được. */
+  --card-w: calc(var(--env-w) * 0.86);
+  --card-h: calc(var(--env-h) * 0.88);
+}
+
+@media (min-width: 640px) {
+  .envelope-stage {
+    --env-w: min(32rem, calc(100vw - 6rem));
+  }
+}
+
+.env-box {
+  position: relative;
+  width: var(--env-w);
+  height: var(--env-h);
+}
+
+/* `perspective` chỉ tác dụng lên CON TRỰC TIẾP của nó. Vì thế nó phải
+   nằm đúng trên cái hộp chứa nắp thư, không phải trên sân khấu ở ngoài:
+   đặt xa hơn một cấp thì mọi phần tử trung gian đều phải mang
+   `transform-style: preserve-3d`, và chỉ cần một cấp quên là nắp thư
+   lật phẳng lì, mất sạch chiều sâu mà không báo lỗi gì. */
+.env-box--3d {
+  perspective: 1500px;
+  perspective-origin: 50% 24%;
+}
+
+/* Mặt giấy chung. Gradient chéo chứ không dọc: cả cảnh có một nguồn
+   sáng duy nhất đặt trên bên trái, và mọi mặt giấy phải nghe theo cùng
+   nguồn sáng ấy thì các lớp mới chồng lên nhau ra chiều sâu.
+
+   Ba màu ở đây là XÁM TRUNG TÍNH chứ không phải xanh navy. Bản trước
+   dùng #1d2433 → #0c1016, và trên màn hình lớn cả chiếc phong bì đọc
+   ra nhựa xanh chứ không ra giấy: giấy không có sắc màu riêng, nó chỉ
+   trả lại màu của ánh sáng chiếu vào nó. Nền trang vốn đã ngả lạnh
+   (#07080c), nên chỉ cần bỏ sắc xanh khỏi tờ giấy là nó tự tách khỏi
+   nền mà không phải kéo sáng thêm bậc nào.
+
+   Bốn gờ trong là ĐỘ DÀY của mép giấy, không phải viền trang trí: sáng
+   ở mép trên và mép trái, tối ở mép dưới và mép phải, đúng theo nguồn
+   sáng trên–trái. Thiếu chúng thì tờ giấy dày 0mm và cả cảnh dẹt lại. */
+.paper {
+  background: linear-gradient(152deg, #32353f 0%, #23262e 52%, #15171d 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(237, 234, 227, 0.11),
+    inset 1px 0 0 rgba(237, 234, 227, 0.05),
+    inset -1px 0 0 rgba(0, 0, 0, 0.45),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.6),
+    0 36px 90px -26px rgba(0, 0, 0, 0.85);
+}
+
+/* Thớ giấy — MỘT chiều, cộng vài đám mây rất nhạt.
+   Đây là chỗ đã hỏng hai lần liên tiếp, cả hai lần vì cùng một lý do:
+   hai dải kẻ chồng nhau thì bao giờ cũng giao thoa. Bản đầu để chu kỳ
+   4px và ra vải sợi carbon; bản sau giãn lên 9/11 và vẫn còn đọc được
+   một tấm lưới trên màn hình lớn. Hai dải kẻ không bao giờ an toàn.
+
+   Nên bây giờ chỉ còn một dải, và nó không thể giao thoa với chính nó.
+   Phần "không đều" — thứ mà tấm lưới trước kia đang cố làm — chuyển
+   sang cho ba đám sáng lớn mềm, thứ không có chu kỳ nên không có hoa
+   văn nào để dựng lên. */
+.env-fibre {
+  background-image:
+    radial-gradient(
+      ellipse 50% 42% at 22% 14%,
+      rgba(237, 234, 227, 0.05),
+      transparent 72%
+    ),
+    radial-gradient(
+      ellipse 52% 44% at 84% 58%,
+      rgba(237, 234, 227, 0.02),
+      transparent 72%
+    ),
+    radial-gradient(
+      ellipse 62% 38% at 44% 100%,
+      rgba(0, 0, 0, 0.13),
+      transparent 76%
+    ),
+    repeating-linear-gradient(
+      93deg,
+      rgba(0, 0, 0, 0.05) 0 1px,
+      transparent 1px 5px
+    );
+}
+
+/* Ba nếp gấp tĩnh ở mặt sau phong bì: hai cánh hông và một cánh đáy.
+   Chúng KHÔNG phải ba mảnh giấy rời mà là ba lớp phủ đặt trên một thân
+   bì liền khối. Cắt thành ba mảnh thật thì ba đường biên gặp nhau đúng
+   giữa mặt bì, và khử răng cưa của trình duyệt để lọt một chấm sáng
+   nằm chính chỗ ấy.
+
+   Hai bộ lọc, và cả hai đều bắt buộc. Chỉ có bóng đổ thôi thì ba cánh
+   chỉ là ba vệt loang mờ. Thêm một bản sao SÁNG lệch 0px với bán kính
+   nhoè nửa pixel là có mép giấy bắt sáng — chính sợi sáng ấy nói cho
+   mắt biết đây là một tờ giấy nằm ĐÈ LÊN một tờ khác.
+
+   ─── Về liều lượng ─────────────────────────────────────────────
+   Ba con số này đã phải kéo xuống một phần ba so với lần thử đầu, và
+   đó là bài học đắt nhất của cả khối phong bì: mặt sau một chiếc phong
+   bì thật gần như PHẲNG MỘT MÀU. Ba cánh giấy cùng cắt từ một tờ, cùng
+   nằm trên một mặt phẳng, chênh nhau đúng một bề dày giấy. Vẽ chúng
+   thành ba mảng sáng khác nhau thì chúng thành ba miếng dán chồng lên
+   nhau, và cánh đáy — mảng to nhất — biến thành một cái nhãn dán.
+
+   Đường gấp phải ở ngưỡng vừa đủ thấy khi nhìn thẳng vào và biến mất
+   khi nhìn lướt. Thấy rõ hơn thế là sai, không phải là đẹp hơn. */
+.env-fold {
+  filter: drop-shadow(0 0 0.5px rgba(237, 234, 227, 0.07))
+    drop-shadow(0 1px 3px rgba(0, 0, 0, 0.32));
+}
+
+/* Mép cắt của miệng bì. Cùng thủ thuật với .env-fold nhưng chỉ có sợi
+   sáng, không có bóng: miệng bì là chỗ giấy bị XÉN chứ không phải chỗ
+   giấy gấp chồng lên nhau, nên không có gì để đổ bóng xuống.
+   Khi phong bì còn đóng thì sợi này nằm khuất dưới nắp thư; nó chỉ
+   xuất hiện đúng lúc nắp lật qua, và làm cái miệng vừa mở ra có mép. */
+.env-mouth {
+  filter: drop-shadow(0 -1px 0 rgba(237, 234, 227, 0.14));
+}
+
+/* Chữ dập chìm dưới con dấu. Không có giọt mực nào ở đây: chỉ một vệt
+   tối lõm xuống cộng một gờ sáng ngay bên dưới, đúng cách một khuôn
+   dập nguội ăn vào mặt giấy. Đổi hai màu này cho nhau thì chữ nổi lên
+   thay vì chìm xuống. */
+.env-deboss {
+  color: rgba(7, 8, 12, 0.72);
+  text-shadow: 0 1px 0 rgba(237, 234, 227, 0.14);
+}
+
+/* Vạch trang trí hai bên dòng chữ dập. Cũng dập chìm, cùng một cặp
+   màu: một nét tối và một gờ sáng dưới nó. Nó tồn tại vì một dòng chữ
+   nhỏ đứng trơ giữa mặt giấy trông như bị bỏ quên; hai vạch ngắn kẹp
+   hai bên biến nó thành một dòng được BÀY ra ở đó. */
+.env-rule {
+  height: 2px;
+  background: linear-gradient(
+    to bottom,
+    rgba(7, 8, 12, 0.62) 0 1px,
+    rgba(237, 234, 227, 0.1) 1px 2px
+  );
+}
+
+/* ── Khung dập chìm ─────────────────────────────────────────────
+   Hoạ tiết duy nhất trên mặt bì, và nó cố ý không phải một hoạ tiết
+   được nghĩ ra: nó chạy đúng theo hình của chính chiếc phong bì, thụt
+   vào trong đều một khoảng — ba cạnh thẳng và hai cạnh chéo của miệng
+   bì. Xưởng in dập một đường viền như thế bằng khuôn nguội, không mực.
+
+   Vì sao phải là SVG chứ không phải CSS: cái cần vẽ ở đây là ĐƯỜNG
+   VIỀN của một ngũ giác lõm. clip-path tô được cả hình, `border` vẽ
+   được viền chữ nhật, nhưng không thứ nào vẽ được nét biên của một
+   hình đa giác bất kỳ mà không phải lồng hai lớp cắt vào nhau và tự
+   tính hiệu của chúng.
+
+   Hai thuộc tính bắt buộc:
+     preserveAspectRatio="none"  khung phải kéo theo tỉ lệ thân bì,
+                                 vốn đổi theo bề ngang màn hình.
+     vector-effect: non-scaling-stroke
+                                 nhưng nét thì KHÔNG được kéo theo. Bỏ
+                                 nó ra thì phép kéo giãn dọc/ngang khác
+                                 nhau làm nét dày mỏng lệch nhau, và
+                                 đường viền dày hẳn ở cạnh này so với
+                                 cạnh kia.
+
+   drop-shadow đặt một bản sao SÁNG lệch xuống một pixel: cùng ngữ pháp
+   với .env-deboss và .env-rule — nét tối là lòng rãnh, sợi sáng ngay
+   dưới là gờ giấy bị đẩy trồi lên. Ba chỗ dập trên mặt bì phải nói
+   cùng một thứ tiếng, không thì chúng thành ba lần in khác nhau. */
+.env-frame polygon {
+  fill: none;
+  stroke: rgba(7, 8, 12, 0.42);
+  stroke-width: 1;
+  filter: drop-shadow(0 1px 0 rgba(237, 234, 227, 0.075));
+}
+
+/* Bóng tiếp đất. Phong bì phải đứng trên một mặt phẳng nào đó, không
+   thì nó lơ lửng giữa mảng đen và cả cảnh mất trọng lượng. */
+.env-shadow {
+  background: radial-gradient(
+    ellipse 50% 50% at 50% 50%,
+    rgba(0, 0, 0, 0.75),
+    transparent 70%
+  );
+  filter: blur(9px);
+}
+
+.flap {
+  transform-style: preserve-3d;
+  transform-origin: top center;
+}
+
+.flap-face {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Nắp thư sáng hơn thân bì một bậc vì nó là lớp giấy nằm trên cùng và
+   hứng nhiều ánh sáng nhất. Cùng dải xám trung tính, chỉ dịch lên. */
+.paper-flap {
+  background: linear-gradient(178deg, #343740 0%, #262932 56%, #1c1f26 100%);
+}
+
+/* Lót nắp thư — mặt trong, chỉ lộ ra sau khi nắp đã lật qua.
+   Phong bì tử tế nào cũng có lớp lót khác màu vỏ, và vì nó chỉ hiện ra
+   khi mở nên nó là phần thưởng cho việc cuộn xuống chứ không phải một
+   chi tiết trang trí thấy ngay từ đầu. Sọc chéo rất mảnh trên nền đỏ
+   trầm, cùng sắc với con dấu sáp. */
+.paper-liner {
+  background-image:
+    repeating-linear-gradient(
+      45deg,
+      rgba(0, 0, 0, 0.1) 0 1px,
+      transparent 1px 10px
+    ),
+    linear-gradient(180deg, #45161a 0%, #2f1114 62%, #1f0b0e 100%);
+}
+
+/* Tấm thiệp phải sáng hơn hẳn phong bì đựng nó. Cho hai mặt cùng tông
+   thì lúc thiệp lộ ra, mắt không thấy có vật gì rời khỏi vật gì, chỉ
+   thấy một mảng tối trượt trên một mảng tối. Ba bậc sáng ở đây (thân
+   bì, nắp thư, tấm thiệp) là thứ dựng nên chiều sâu của cả cảnh. */
+.paper-card {
+  width: var(--card-w);
+  height: var(--card-h);
+  background: linear-gradient(172deg, #3d404a 0%, #2e313a 46%, #23262d 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(237, 234, 227, 0.22),
+    0 40px 90px -24px rgba(0, 0, 0, 0.9);
+}
+
+/* ── Con dấu sáp ────────────────────────────────────────────────
+   Hình tròn duy nhất trên cả trang, ngoại lệ duy nhất của hệ bo góc
+   2px. Nó được phép tròn vì nó là vật duy nhất ở đây không do người
+   cầm kéo cắt ra.
+
+   Bản trước cắt bằng một đa giác 64 đỉnh cho ra giọt sáp méo có thuỳ.
+   Hình ấy đúng với một giọt sáp TỰ DO nhỏ xuống giấy rồi tự đông —
+   nhưng con dấu này không tự do: nó bị một cái khuôn đồng ép xuống
+   ngay lúc sáp còn chảy. Cái ép sau cùng mới là cái quyết định đường
+   biên, và khuôn thì tròn. Giọt méo kể sai thứ tự việc đã xảy ra.
+
+   Bốn bán kính vẫn lệch nhau vài phần trăm chứ không phải đúng 50%
+   cả bốn. Chênh lệch nhỏ tới mức không ai chỉ ra được, nhưng nó là
+   khác biệt giữa một hình tròn được VẼ và một vật tròn: sáp bị ép
+   thì bao giờ cũng trào ra một phía nhiều hơn phía kia.
+
+   Tròn trở lại thì bóng đổ về được box-shadow đặt ngay trên phần tử
+   này. box-shadow đi theo border-radius nhưng KHÔNG đi theo
+   clip-path — đó là lý do bản đa giác trước phải mượn thêm một lớp
+   cha mang drop-shadow. Bỏ được hẳn lớp bọc ấy. */
+/* ── Vì sao bản có vành vàng vẫn ra CÁI NÚT ──────────────────────
+   Không phải tại cái vành. Tại HƯỚNG ÁNH SÁNG.
+
+   Bản ấy sáng ở trên–trái và tối dần xuống dưới–phải trên toàn bộ
+   mặt đỏ. Đó là cách một khối LỒI bắt sáng, và một khối tròn lồi có
+   viền kim loại quanh mép thì đúng là cái nút bấm — không còn cách
+   đọc nào khác.
+
+   Mà con dấu sáp thì LÕM. Cái khuôn ép xuống, sáp bị đẩy ra rìa và
+   dồn thành một gờ nổi quanh mép, còn lòng dấu tụt xuống thấp hơn.
+   Nên toàn bộ ánh sáng phải đảo ngược so với bản trước: gờ ngoài
+   sáng ở trên (nó lồi), lòng dấu tối ở trên và sáng ở dưới (nó
+   lõm). Cùng một màu sáp, cùng một cái vành, chỉ đảo chiều sáng —
+   và cái nút thành vết dập.
+
+   ─── Vì sao KHÔNG có kim loại nào trên con dấu này ─────────────
+   Đã thử hai chỗ, bỏ cả hai.
+
+   Một dải vàng liền chạy quanh mép ngoài: đó là cái nẹp của một tấm
+   huy hiệu chứ không phải chi tiết của một con dấu. Một dải liền ôm
+   trọn chu vi thì nó ĐÓNG KHUNG cái hình bên trong, và mắt đọc ra
+   một vật được viền lại — tấm mề đay.
+
+   Một vòng vạch vàng đứt quãng nằm lùi vào trong lòng dấu, kiểu
+   vòng hạt nổi mà khuôn dấu thật hay khắc: đúng hơn hẳn về cấu tạo,
+   nhưng ở cỡ 56–72px thì mỗi mũi chỉ chỉ còn vài pixel, và vài pixel
+   vàng cạnh nhau trên nền đỏ sẫm thì không đọc ra sợi chỉ — nó đọc
+   ra răng cưa.
+
+   Nên con dấu này không có kim loại. Nó chỉ có sáp, và toàn bộ việc
+   phân biệt nó với một cái nút nằm ở chiều sáng: gờ ngoài lồi nên
+   sáng ở trên, lòng dấu lõm nên tối ở trên. Ít chi tiết hơn nhưng
+   không có chi tiết nào phải thu nhỏ tới mức mất nghĩa.
+
+   (Vòng kim chỉ nằm trong lịch sử tệp này chứ không nằm trong CSS.
+   Muốn dựng lại thì nó là một .wax::after phủ repeating-conic-gradient
+   cộng một mask radial để biến quạt nan thành vòng — chu kỳ phải chia
+   hết 360, không thì vạch cuối hở gấp đôi ngay 12 giờ.)
+
+   Ngoài cùng vẫn để bán kính lệch nhau vài phần trăm, còn lòng dấu
+   thì tròn đúng 50%. Đó không phải cẩu thả: mép sáp là chỗ sáp tự
+   trào ra nên nó méo, còn lòng dấu là hình của cái khuôn nên nó
+   tròn tuyệt đối. Hai đường tròn không đồng dạng chính là thứ nói
+   ra rằng có hai vật đã gặp nhau ở đây. */
+.wax {
+  position: relative;
+  border-radius: 49% 51% 52% 48% / 51% 47% 53% 49%;
+
+  background:
+    /* Độ sáng của gờ sáp theo góc. Sáng ở khoảng mười một giờ, tối
+       nhất ở khoảng bốn giờ — cùng nguồn sáng trên–trái với cả cảnh.
+       Chặng đầu và chặng cuối phải cùng giá trị, không thì có một
+       đường nối chạy dọc lúc 0 độ. */
+    conic-gradient(
+      from 0deg,
+      rgba(255, 236, 214, 0.07) 0deg,
+      rgba(0, 0, 0, 0.14) 62deg,
+      rgba(0, 0, 0, 0.3) 132deg,
+      rgba(0, 0, 0, 0.1) 205deg,
+      rgba(255, 236, 214, 0.1) 288deg,
+      rgba(255, 240, 220, 0.2) 322deg,
+      rgba(255, 236, 214, 0.07) 360deg
+    ),
+    /* Gờ sáp nổi quanh mép: rãnh ở 78%, đỉnh gờ ở 83%, rồi tối dần ra
+       mép ngoài. closest-side để 100% rơi đúng vào bán kính chứ không
+       phải vào góc của hộp vuông. */
+    radial-gradient(
+        circle closest-side at 50% 50%,
+        #5c161c 0 74%,
+        rgba(18, 4, 6, 0.88) 78%,
+        #93262e 83%,
+        #7d1f27 89%,
+        #5e181f 94%,
+        #3d1014 98%,
+        #2c0a0e 100%
+      );
+
+  box-shadow:
+    /* Sợi sáng chạy dọc mép trên: gờ sáp là chỗ LỒI nên nó bắt sáng. */
+    inset 0 1px 0 rgba(255, 226, 205, 0.18),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.42),
+    /* Vệt tiếp đất sát dưới để con dấu dính vào mặt giấy, và một quầng
+       lớn khuếch tán để nó có bề dày. Chỉ có quầng lớn thôi thì con
+       dấu lơ lửng trên phong bì. */
+    0 2px 3px rgba(0, 0, 0, 0.6),
+    0 11px 20px rgba(0, 0, 0, 0.72);
+}
+
+/* Lòng dấu — phần tụt xuống dưới gờ sáp.
+   inset 11% cho đường kính 78%, khớp đúng chặng rãnh ở 78% của gờ phía
+   trên, nên chỗ giao giữa gờ và lòng là một rãnh chứ không phải một
+   đường kẻ.
+
+   Hai bóng inset ở đây là toàn bộ lý do khối này tồn tại. Bóng TỐI đổ
+   từ trên xuống: thành trong phía trên bị chính cái gờ che nắng. Bóng
+   SÁNG rất nhạt hắt từ dưới lên: thành trong phía dưới hứng trọn ánh
+   sáng chiếu chếch vào lòng chảo. Đảo hai cái cho nhau thì lòng dấu
+   phồng lên và ta lại được cái nút.
+
+   Gradient nền cũng chạy ngược chiều với mọi mặt giấy khác trong cảnh
+   — tối ở trên, sáng ở dưới. Đây là chỗ DUY NHẤT trên cả trang được
+   phép làm thế, vì nó là chỗ duy nhất lõm xuống. */
+.wax::before {
+  content: "";
+  position: absolute;
+  inset: 11%;
+  border-radius: 50%;
+  background:
+    /* Sáp không đều màu: chỗ đông trước, chỗ đông sau, bọt khí li ti.
+       Ba vệt loang lệch tâm, không vệt nào đủ rõ để thành một hình. */
+    radial-gradient(
+      ellipse 42% 34% at 71% 76%,
+      rgba(255, 214, 196, 0.055),
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 36% 30% at 27% 25%,
+      rgba(0, 0, 0, 0.22),
+      transparent 72%
+    ),
+    radial-gradient(
+      ellipse 24% 20% at 44% 58%,
+      rgba(0, 0, 0, 0.1),
+      transparent 76%
+    ),
+    linear-gradient(158deg, #53141a 0%, #661820 54%, #7d1f26 100%);
+  box-shadow:
+    inset 2px 3px 6px rgba(10, 2, 3, 0.62),
+    inset -2px -3px 6px rgba(255, 196, 176, 0.055);
+}
+
+/* Nhịp thở rất chậm của con dấu, chỉ để mắt biết chỗ này còn sống và
+   đang chờ mình làm gì đó. Biên độ 1.5% — thấy được nhưng không nhìn
+   thẳng vào thì không nhận ra. */
+.breathe {
+  animation: breathe 4.2s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.015);
+  }
+}
+
+/* ── Chỉ dẫn cuộn ───────────────────────────────────────────────
+   Đây là chỉ dẫn thao tác, không phải nhãn trang trí kiểu "cuộn để
+   khám phá": không ai đoán được rằng phải cuộn để mở một chiếc phong
+   bì nếu trang không nói ra.
+
+   Hình con chuột dựng bằng div bo tròn chứ không lấy từ một bộ icon.
+   Phần mang nghĩa ở đây là chấm con lăn ĐANG CHẠY XUỐNG — một glyph
+   tĩnh nói được "chuột" nhưng không nói được "cuộn".
+
+   Cả khối này cố ý MỜ. Nó là chú thích cho chiếc phong bì chứ không
+   phải một vật ngang hàng: đủ sáng để ai đang tìm cách tương tác thì
+   thấy, đủ tối để không ai nhìn nó trước khi nhìn con dấu sáp. */
+.cue-mouse {
+  position: relative;
+  display: block;
+  width: 1.15rem;
+  height: 1.9rem;
+  border: 1px solid rgba(237, 234, 227, 0.22);
+  border-radius: 999px;
+}
+
+.cue-wheel {
+  position: absolute;
+  top: 0.31rem;
+  left: 50%;
+  width: 2px;
+  height: 0.35rem;
+  margin-left: -1px;
+  border-radius: 999px;
+  background-color: var(--color-flame);
+  animation: cue-wheel 2.2s infinite;
+}
+
+/* ── Nhịp của chấm con lăn ──────────────────────────────────────
+   Bản trước sai ba chỗ, và cả ba đều cùng một gốc: nó được viết như
+   một thanh tiến độ chứ không như một vật rơi.
+
+   1. Nó chạy suốt bằng --ease-expo. Expo phóng gần hết quãng đường
+      trong một phần mười thời gian rồi bò nốt phần còn lại — đúng cho
+      một mảng lớn ập vào, sai hoàn toàn cho một chấm nhỏ tụt xuống.
+      Bây giờ mỗi chặng có hàm riêng: vào thì hãm lại, ra thì tăng tốc,
+      đúng như một vật được thả rơi rồi hút mất.
+
+   2. Nó dừng ở lưng chừng lòng chuột và chừa lại một khoảng trống to
+      phía dưới. Bây giờ quãng chạy được đặt để chấm dừng cách đáy đúng
+      bằng khoảng cách lúc nó xuất phát từ đỉnh — chuyển động nằm giữa
+      một khung cân.
+
+      Cả năm con số của chấm này (vị trí đầu, chiều cao, ba chặng rơi)
+      đều là 82.6% của bản trước, đúng bằng tỉ lệ con chuột thu nhỏ từ
+      2.3rem xuống 1.9rem. Thu nhỏ cái vỏ mà giữ nguyên quãng rơi thì
+      chấm chạy chạm đáy; nhân đều cả năm thì bố cục bên trong không
+      đổi một li.
+
+   3. Nó tắt ở mốc 56% rồi treo im tới 100%: gần nửa chu kỳ không có
+      gì xảy ra, và mắt đọc ra một hiệu ứng bị kẹt. Còn 30%, vừa đủ
+      thành một nhịp nghỉ có chủ ý.
+
+   Thêm một chút giãn dọc giữa quãng rơi. Biên độ nhỏ thôi, nhưng đó là
+   thứ khiến chấm này có quán tính thay vì bị kéo bằng tay. */
+@keyframes cue-wheel {
+  0% {
+    transform: translateY(0) scaleY(0.82);
+    opacity: 0;
+    animation-timing-function: cubic-bezier(0.22, 0.85, 0.3, 1);
+  }
+  16% {
+    transform: translateY(0.12rem) scaleY(1);
+    opacity: 0.85;
+    animation-timing-function: cubic-bezier(0.45, 0, 0.75, 1);
+  }
+  52% {
+    transform: translateY(0.63rem) scaleY(1.22);
+    opacity: 0.85;
+    animation-timing-function: cubic-bezier(0.4, 0, 1, 1);
+  }
+  70%,
+  100% {
+    transform: translateY(0.84rem) scaleY(0.9);
+    opacity: 0;
+  }
+}
+
+/* Hai mũi nhọn rơi so le dưới con chuột, nhắc lại hướng thêm một lần
+   nữa cho ai không đọc ra hình con chuột. Thứ tự transform quan trọng:
+   translateY trước rồi mới rotate, để chúng rơi thẳng đứng chứ không
+   trượt chéo theo trục đã bị xoay.
+
+   Chúng màu XƯƠNG chứ không màu lửa. Cả khối chỉ được phép có một chỗ
+   đỏ, và chỗ ấy phải là chấm con lăn — thứ nhỏ nhất nhưng mang toàn bộ
+   nghĩa. Cho cả ba cùng đỏ như bản trước thì không còn chỗ nào dẫn mắt,
+   và ba vật đỏ nhấp nháy cạnh nhau còn tranh mất chú ý của con dấu sáp
+   ở ngay trên. */
+.cue-chev {
+  width: 0.32rem;
+  height: 0.32rem;
+  border-right: 1px solid rgba(237, 234, 227, 0.55);
+  border-bottom: 1px solid rgba(237, 234, 227, 0.55);
+  opacity: 0;
+  animation: cue-chev 2.2s var(--ease-expo) infinite;
+  animation-delay: var(--cue-delay, 0ms);
+}
+
+@keyframes cue-chev {
+  0%,
+  100% {
+    opacity: 0;
+    transform: translateY(-3px) rotate(45deg);
+  }
+  38% {
+    opacity: 0.5;
+    transform: translateY(0) rotate(45deg);
+  }
+  70% {
+    opacity: 0;
+    transform: translateY(3px) rotate(45deg);
+  }
+}
+
+/* ── Chấm "chưa mở" ─────────────────────────────────────────────
+   Quy ước hộp thư đến: một chấm màu đứng trước dòng chữ nghĩa là
+   thứ này chưa được đọc. Nó nói đúng cái mà con dấu sáp còn nguyên
+   đang nói, chỉ bằng thứ ngôn ngữ mà người dùng đọc được ngay lập
+   tức mà không cần nhìn ra đó là sáp.
+
+   Chấm để INLINE ngay đầu dòng chữ chứ không dựng flex với một
+   `gap`. Lý do rất cụ thể: trên màn hình hẹp dòng này xuống hai
+   dòng, mà flex + items-center thì căn chấm vào giữa CẢ KHỐI hai
+   dòng, tức là nó trôi xuống lửng lơ giữa hai dòng chữ. Để inline
+   thì nó nằm trong mạch chữ và bám đúng dòng đầu.
+
+   Nhịp thở 4.2s trùng khít với .breathe của con dấu sáp. Hai vật
+   này đang nói cùng một điều — lá thư còn nguyên — nên chúng phải
+   thở cùng nhau. Cho hai chu kỳ lệch nhau thì có hai thứ nhấp nháy
+   độc lập trong một khung hình, và mắt phải chia đôi sự chú ý. */
+.cue-unread {
+  display: inline-block;
+  width: 0.3rem;
+  height: 0.3rem;
+  margin-right: 0.65em;
+  vertical-align: 0.06em;
+  border-radius: 999px;
+  background-color: var(--color-flame);
+  animation: cue-unread 4.2s ease-in-out infinite;
+}
+
+@keyframes cue-unread {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(182, 42, 48, 0.42);
+  }
+  50% {
+    opacity: 0.42;
+    box-shadow: 0 0 0 3px rgba(182, 42, 48, 0);
+  }
+}
+
+/* Ô cắt cụt cho chữ dựng lên ở trang chính. Cùng cơ chế với .rise
+   nhưng không dùng chung class: .rise mang sẵn `transition`, mà thứ
+   nằm bên trong đây được Motion ghi lại mỗi khung hình theo vị trí
+   cuộn. Hai thứ ấy chồng lên nhau thì mỗi giá trị mới lại bị nội suy
+   thêm một lần, và chữ chạy trễ hẳn sau tay người cuộn. */
+.curtain {
+  display: block;
+  overflow: hidden;
+  /* Chừa cả bốn phía, cùng lý do với .rise. */
+  padding: 0.26em 0.2em 0.18em;
+  margin: -0.26em -0.2em -0.18em;
+}
+
+/* ═══ TRỢ NĂNG ═════════════════════════════════════════════════ */
+
+::selection {
+  background-color: var(--color-seal);
+  color: var(--color-onseal);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-flame);
+  outline-offset: 3px;
+  border-radius: var(--radius);
+}
+
+/* ── Chuyển động luôn bật ───────────────────────────────────────
+   Trang cố ý KHÔNG đọc prefers-reduced-motion. Mọi hoạt cảnh chạy như
+   nhau với mọi giá trị của cài đặt ấy, kể cả "reduce".
+
+   Đây là quyết định của chủ trang chứ không phải sơ suất, ghi lại ở đây
+   để lần sau ai đó thấy thiếu thì biết là thiếu có chủ ý: cảnh mở thư và
+   các lớp thị sai là nội dung chính của tấm thiệp này chứ không phải lớp
+   trang trí thêm vào, nên chúng không tắt theo cài đặt hệ điều hành.
+
+   Đổi ý thì thêm lại một khối @media (prefers-reduced-motion: reduce) ở
+   đúng chỗ này. Khi đó nhớ ghi đè opacity cho CẢ HAI biến thể có tiền tố
+   .on-load, tức là ".on-load .fade" và ".on-load .rise > span": hai luật
+   ấy đặt opacity về 0 rồi trông cậy vào animation để kéo lên lại: tắt
+   animation mà không ghi đè opacity thì màn thiệp trắng trơn.
+
+   Riêng cảnh mở thư thì KHÔNG ẩn đi được, vì màn thiệp nằm bên trong
+   chính khung tấm thiệp ấy. Cách đúng là tháo nó ra thành một màn tĩnh,
+   y hệt khối <noscript> trong app/layout.tsx đang làm — chép lại đúng
+   những luật ở đó là xong. */
