@@ -416,7 +416,7 @@ Thiết lập một lần trong repo:
 1. **Settings → Pages → Source**: chọn *GitHub Actions*.
 2. **Settings → Pages → Custom domain**: điền `graduation.timezlab.org`
    (phải khớp với [`public/CNAME`](public/CNAME)), bật *Enforce HTTPS*.
-3. DNS của `timezlab.org`: bản ghi `CNAME graduation → <user>.github.io`.
+3. DNS của `timezlab.org`: bản ghi `CNAME graduation → timezlab.github.io`.
 
 Vài thứ đi kèm host tĩnh, đừng bỏ:
 

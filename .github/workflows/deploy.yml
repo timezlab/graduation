@@ -3,7 +3,7 @@
 # Trong Settings → Pages của repo, mục Source phải chọn "GitHub Actions"
 # (không phải "Deploy from a branch"), và mục Custom domain điền đúng tên
 # miền trong public/CNAME. DNS: bản ghi CNAME `graduation` trỏ về
-# `<user>.github.io`.
+# `timezlab.github.io`.
 name: Deploy to GitHub Pages
 
 on:
